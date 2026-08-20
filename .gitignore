@@ -1,0 +1,8 @@
+# 私密原文只保留在本地 Obsidian 库，不进入 Git 历史。
+/私人资料/
+
+# 可再生的应用状态不纳入知识库版本记录。
+/.claudian/
+/.obsidian/workspace*.json
+/.obsidian/cache/
+/.trash/

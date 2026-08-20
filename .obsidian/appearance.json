@@ -1,0 +1,12 @@
+{
+  "accentColor": "#c56b3f",
+  "interfaceFontFamily": "Microsoft YaHei UI",
+  "textFontFamily": "Source Han Serif SC VF",
+  "monospaceFontFamily": "SF Mono",
+  "baseFontSize": 16,
+  "nativeMenus": false,
+  "cssTheme": "Minimal",
+  "enabledCssSnippets": [
+    "the-memory-archive"
+  ]
+}

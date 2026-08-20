@@ -1,0 +1,451 @@
+/* @settings
+name: The Memory · 档案视觉系统
+id: the-memory-archive
+settings:
+  - id: tm-colors
+    title: 色彩
+    type: heading
+    level: 2
+  - id: tm-accent
+    title: 主强调色
+    description: 用于链接、标题标记和选中态，不表示证据强弱。
+    type: variable-themed-color
+    format: hex
+    opacity: false
+    default-light: '#B65F38'
+    default-dark: '#E09A61'
+  - id: tm-paper
+    title: 纸张底色
+    type: variable-themed-color
+    format: hex
+    opacity: false
+    default-light: '#FBF7EF'
+    default-dark: '#191815'
+  - id: tm-panel
+    title: 面板底色
+    type: variable-themed-color
+    format: hex
+    opacity: false
+    default-light: '#F3ECDF'
+    default-dark: '#22201C'
+  - id: tm-rule
+    title: 分隔线颜色
+    type: variable-themed-color
+    format: hex
+    opacity: false
+    default-light: '#D8CBB7'
+    default-dark: '#464039'
+  - id: tm-typography
+    title: 字体与尺度
+    type: heading
+    level: 2
+  - id: tm-body-font
+    title: 正文字体
+    type: variable-text
+    default: 'Source Han Serif SC VF, Source Han Serif SC, Noto Serif CJK SC, Songti SC, SimSun, serif'
+  - id: tm-ui-font
+    title: 界面字体
+    type: variable-text
+    default: 'Microsoft YaHei UI, Microsoft YaHei, Noto Sans CJK SC, sans-serif'
+  - id: tm-radius
+    title: 圆角
+    type: variable-number-slider
+    default: 10
+    min: 2
+    max: 18
+    step: 1
+    format: px
+  - id: tm-rule-width
+    title: 标题线宽
+    type: variable-number-slider
+    default: 2
+    min: 1
+    max: 5
+    step: 1
+    format: px
+  - id: tm-features
+    title: 功能
+    type: heading
+    level: 2
+  - id: tm-soft-shadows
+    title: 柔和阴影
+    description: 为首页卡片、图片和浮层增加轻微层次。
+    type: class-toggle
+    default: true
+*/
+
+body {
+  --tm-accent: #b65f38;
+  --tm-paper: #fbf7ef;
+  --tm-panel: #f3ecdf;
+  --tm-rule: #d8cbb7;
+  --tm-body-font: "Source Han Serif SC VF", "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", SimSun, serif;
+  --tm-ui-font: "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --tm-radius: 10px;
+  --tm-rule-width: 2px;
+  --font-text-theme: var(--tm-body-font);
+  --font-interface-theme: var(--tm-ui-font);
+  --font-monospace-theme: "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --radius-s: calc(var(--tm-radius) * 0.55);
+  --radius-m: var(--tm-radius);
+  --radius-l: calc(var(--tm-radius) * 1.35);
+  --link-color: var(--tm-accent);
+  --link-color-hover: color-mix(in srgb, var(--tm-accent) 78%, var(--text-normal));
+  --interactive-accent: var(--tm-accent);
+  --interactive-accent-hover: color-mix(in srgb, var(--tm-accent) 82%, white);
+  --text-selection: color-mix(in srgb, var(--tm-accent) 25%, transparent);
+}
+
+body.theme-light {
+  --background-primary: var(--tm-paper);
+  --background-primary-alt: color-mix(in srgb, var(--tm-paper) 92%, var(--tm-panel));
+  --background-secondary: var(--tm-panel);
+  --background-secondary-alt: color-mix(in srgb, var(--tm-panel) 88%, var(--tm-rule));
+  --background-modifier-border: var(--tm-rule);
+  --background-modifier-hover: color-mix(in srgb, var(--tm-accent) 8%, var(--tm-paper));
+  --text-normal: #302b26;
+  --text-muted: #766c62;
+  --text-faint: #9c9084;
+}
+
+body.theme-dark {
+  --tm-accent: #e09a61;
+  --tm-paper: #191815;
+  --tm-panel: #22201c;
+  --tm-rule: #464039;
+  --background-primary: var(--tm-paper);
+  --background-primary-alt: color-mix(in srgb, var(--tm-paper) 92%, var(--tm-panel));
+  --background-secondary: var(--tm-panel);
+  --background-secondary-alt: color-mix(in srgb, var(--tm-panel) 86%, var(--tm-rule));
+  --background-modifier-border: var(--tm-rule);
+  --background-modifier-hover: color-mix(in srgb, var(--tm-accent) 10%, var(--tm-paper));
+  --text-normal: #e7dfd3;
+  --text-muted: #aaa095;
+  --text-faint: #7f776f;
+}
+
+/* UI frame */
+.workspace-tab-header-container,
+.workspace-ribbon,
+.status-bar {
+  border-color: var(--tm-rule);
+}
+
+.workspace-tab-header.is-active,
+.nav-file-title.is-active,
+.nav-folder-title.is-active {
+  color: var(--text-normal);
+}
+
+.workspace-tab-header.is-active::before,
+.nav-file-title.is-active::before {
+  background: var(--tm-accent);
+}
+
+.nav-file-title,
+.nav-folder-title {
+  border-radius: var(--radius-s);
+  margin-block: 1px;
+}
+
+.nav-folder-title[data-count]::after,
+.oz-explorer-root-nav-folder-title[data-count]::after {
+  min-width: 1.65em;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--tm-rule) 78%, transparent);
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--tm-paper) 55%, transparent);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Top-level collection markers. These are navigation aids, not metadata. */
+.nav-folder-title:is(
+  [data-path="家庭"],
+  [data-path="小学"],
+  [data-path="初中"],
+  [data-path="高中"],
+  [data-path="大学"],
+  [data-path="人物关系"],
+  [data-path="文化与审美"],
+  [data-path="背景资料"],
+  [data-path="写作体系"],
+  [data-path="Excalidraw"],
+  [data-path="项目管理"],
+  [data-path="隐私"],
+  [data-path="私人资料"]
+)::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  margin: 7px 7px 0 2px;
+  border-radius: 50%;
+  background: var(--tm-folder-color, var(--tm-accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tm-folder-color, var(--tm-accent)) 18%, transparent);
+}
+
+.nav-folder-title[data-path="家庭"] { --tm-folder-color: #b76e4b; }
+.nav-folder-title[data-path="小学"] { --tm-folder-color: #6d9f71; }
+.nav-folder-title[data-path="初中"] { --tm-folder-color: #5c879c; }
+.nav-folder-title[data-path="高中"] { --tm-folder-color: #4f86c6; }
+.nav-folder-title[data-path="大学"] { --tm-folder-color: #7868b3; }
+.nav-folder-title[data-path="人物关系"] { --tm-folder-color: #b66b8c; }
+.nav-folder-title[data-path="文化与审美"] { --tm-folder-color: #d39b44; }
+.nav-folder-title[data-path="背景资料"] { --tm-folder-color: #7d8d91; }
+.nav-folder-title[data-path="写作体系"] { --tm-folder-color: #bf7b35; }
+.nav-folder-title[data-path="Excalidraw"] { --tm-folder-color: #da7547; }
+.nav-folder-title[data-path="项目管理"] { --tm-folder-color: #7d776e; }
+.nav-folder-title:is([data-path="隐私"], [data-path="私人资料"]) { --tm-folder-color: #b9584e; }
+
+/* Reading typography */
+.markdown-rendered,
+.markdown-source-view.mod-cm6 .cm-scroller {
+  font-family: var(--tm-body-font);
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+
+.markdown-rendered p,
+.markdown-source-view.mod-cm6 .cm-line {
+  hanging-punctuation: first allow-end last;
+}
+
+.markdown-rendered h1,
+.markdown-rendered h2,
+.markdown-rendered h3,
+.markdown-source-view.mod-cm6 .HyperMD-header {
+  font-family: var(--tm-ui-font);
+  letter-spacing: 0.015em;
+}
+
+.markdown-rendered h1 {
+  position: relative;
+  margin-bottom: 1.5em;
+  padding-bottom: 0.45em;
+}
+
+.markdown-rendered h1::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: 0;
+  width: min(11rem, 38%);
+  height: var(--tm-rule-width);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--tm-accent), transparent);
+}
+
+.markdown-rendered h2 {
+  margin-top: 2.1em;
+  padding-inline-start: 0.7em;
+  border-inline-start: var(--tm-rule-width) solid var(--tm-accent);
+}
+
+.markdown-rendered h3 {
+  color: color-mix(in srgb, var(--text-normal) 82%, var(--tm-accent));
+}
+
+.markdown-rendered a.internal-link {
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+  text-decoration-color: color-mix(in srgb, var(--tm-accent) 45%, transparent);
+}
+
+.markdown-rendered a.internal-link:hover {
+  text-decoration-color: var(--tm-accent);
+}
+
+.tag,
+.cm-hashtag {
+  border-radius: 999px;
+}
+
+.metadata-container {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--tm-rule);
+  border-radius: var(--tm-radius);
+  background: color-mix(in srgb, var(--tm-panel) 70%, transparent);
+}
+
+/* Tables and data views */
+.markdown-rendered .table-wrapper,
+.block-language-dataview {
+  border: 1px solid var(--tm-rule);
+  border-radius: var(--tm-radius);
+  overflow: auto;
+  background: color-mix(in srgb, var(--tm-paper) 88%, var(--tm-panel));
+}
+
+.markdown-rendered table {
+  margin: 0;
+}
+
+.markdown-rendered th {
+  font-family: var(--tm-ui-font);
+  font-weight: 650;
+  color: var(--text-normal);
+  background: color-mix(in srgb, var(--tm-accent) 10%, var(--tm-panel));
+}
+
+.markdown-rendered tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--tm-panel) 38%, transparent);
+}
+
+.markdown-rendered.source-ledger table,
+.markdown-source-view.mod-cm6.source-ledger {
+  font-size: 0.92em;
+}
+
+/* Callouts: visual labels never replace source and verification fields. */
+.callout {
+  border: 1px solid rgba(var(--callout-color), 0.24);
+  border-radius: var(--tm-radius);
+  background: color-mix(in srgb, rgb(var(--callout-color)) 7%, var(--tm-paper));
+}
+
+.callout[data-callout="fact"] {
+  --callout-color: 72, 126, 88;
+  --callout-icon: lucide-badge-check;
+}
+
+.callout[data-callout="source"] {
+  --callout-color: 76, 126, 164;
+  --callout-icon: lucide-library;
+}
+
+.callout[data-callout="analysis"] {
+  --callout-color: 190, 126, 47;
+  --callout-icon: lucide-scan-search;
+}
+
+.callout[data-callout="fiction"] {
+  --callout-color: 132, 94, 166;
+  --callout-icon: lucide-feather;
+}
+
+.callout[data-callout="pending"] {
+  --callout-color: 116, 113, 108;
+  --callout-icon: lucide-circle-dashed;
+}
+
+.callout[data-callout="privacy"] {
+  --callout-color: 178, 70, 67;
+  --callout-icon: lucide-shield-alert;
+}
+
+/* Dashboard */
+.markdown-rendered.the-memory-dashboard .markdown-preview-sizer,
+.markdown-source-view.mod-cm6.the-memory-dashboard .cm-contentContainer {
+  max-width: min(92%, 1180px);
+}
+
+.markdown-rendered.the-memory-dashboard .inline-title,
+.markdown-rendered.the-memory-dashboard .metadata-container {
+  display: none;
+}
+
+.markdown-rendered.the-memory-dashboard h1 {
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  letter-spacing: -0.045em;
+  margin-top: 0.6em;
+  margin-bottom: 0.7em;
+}
+
+.markdown-rendered.the-memory-dashboard h1::before {
+  content: "PERSONAL ARCHIVE · 2026";
+  display: block;
+  margin-bottom: 0.55rem;
+  font-family: "SF Mono", monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--tm-accent);
+}
+
+.markdown-rendered.the-memory-dashboard .markdown-preview-section > div > p:first-of-type {
+  max-width: 56rem;
+  font-size: 1.08em;
+  color: var(--text-muted);
+}
+
+.markdown-rendered.the-memory-dashboard .callout[data-callout="important"] {
+  --callout-color: 182, 95, 56;
+}
+
+.markdown-rendered.the-memory-dashboard .block-language-dataview {
+  max-height: 34rem;
+}
+
+body.tm-soft-shadows .markdown-rendered.the-memory-dashboard .callout,
+body.tm-soft-shadows .markdown-rendered img,
+body.tm-soft-shadows .popover,
+body.tm-soft-shadows .menu {
+  box-shadow: 0 12px 32px color-mix(in srgb, #000 12%, transparent);
+}
+
+/* Long-form reading */
+.markdown-rendered.longform .markdown-preview-sizer,
+.markdown-source-view.mod-cm6.longform .cm-contentContainer {
+  max-width: min(84%, 850px);
+}
+
+.markdown-rendered.longform p {
+  line-height: 1.82;
+  margin-block: 0.9em;
+}
+
+.markdown-rendered.longform blockquote {
+  border-inline-start-color: var(--tm-accent);
+  color: var(--text-muted);
+}
+
+/* Media */
+.markdown-rendered img,
+.markdown-rendered video,
+.excalidraw-svg {
+  border-radius: var(--tm-radius);
+}
+
+.markdown-rendered img {
+  border: 1px solid color-mix(in srgb, var(--tm-rule) 75%, transparent);
+}
+
+@media (max-width: 700px) {
+  .markdown-rendered.the-memory-dashboard .markdown-preview-sizer,
+  .markdown-source-view.mod-cm6.the-memory-dashboard .cm-contentContainer,
+  .markdown-rendered.longform .markdown-preview-sizer,
+  .markdown-source-view.mod-cm6.longform .cm-contentContainer {
+    max-width: 100%;
+  }
+
+  .markdown-rendered.the-memory-dashboard h1 {
+    font-size: 2.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media print {
+  .workspace-ribbon,
+  .status-bar,
+  .nav-folder-title[data-count]::after {
+    display: none !important;
+  }
+
+  .markdown-rendered img,
+  .callout,
+  .metadata-container {
+    box-shadow: none !important;
+  }
+}
