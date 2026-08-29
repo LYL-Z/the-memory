@@ -257,3 +257,18 @@ tags:
 2. 班级名录中的双链人物节点可以暂时没有独立人物页。没有人物素材时不得为了页面齐全而补造性格、生平或关系。
 3. 回答完整性问题时，必须同时报告已完成项、结构性占位、待核字段和隐私隔离结果，不得只给出口头保证。
 4. 新增重要素材后，先更新对应人物页和时间线，再同步更新总收录审计。
+
+## Git / GitHub 备份与推送工作流
+
+知识库 git 仓库位于 `The Memory/The Memory`（注意：不是外层 `D:/The Memory`）。本机已建 GitHub 私有库 `LYL-Z/the-memory`，本地 master 跟踪 origin/master。
+
+执行约束：
+
+1. 私密层 `The Memory/私人资料/` 已被 `.gitignore` 排除，普通 `git add -A` / `git push` 不会上传任何私密文件；公开导出与备份亦须排除该目录。
+2. 本机 push 有三处必坑，缺一会失败：
+   - git 全局 `http.proxy=127.0.0.1:11119` 已失效，push 须加 `-c http.proxy= -c https.proxy=`（清空，回退沙箱内可用的环境代理 `https_proxy=127.0.0.1:59889`）。
+   - 凭据助手原始配置 `!'C:\Program Files\GitHub CLI\gh.exe' auth git-credential`（绝对路径含空格/反斜杠）在 git 调用时失效，报 “could not read Username”；须改用 `-c "credential.https://github.com.helper=!gh auth git-credential"`（从 PATH 取 gh）。`gh` 已登录 LYL-Z（repo 权限）。
+   - 单文件超 GitHub 100MB 硬限制须用 Git LFS：`git lfs install` 后 `git lfs migrate import --include=<路径> --everything` 改写历史为 LFS 指针，再 `git push --force`；`git lfs` 3.7.1 已装。
+3. 含括号的中文文件名（如 `胡睿涵(G2212).md`）禁用 `git rm`：git 2.55 会误删大量文件。此类文件用 `rm -f <文件>` + `git add -A` 删除；误删时 `git reset --hard HEAD` 可完整恢复（HEAD 始终完好）。
+4. 已配置每日自动 push 自动化（运行 `The Memory/The Memory/scripts/push_vault.sh`，内含上述代理/凭据处理并自动提交变更）。手动全量备份亦可直接运行该脚本。
+5. 审计快照 `D:/The Memory/audit-report-obsidian-2026-08-29.json` 位于仓库外层父目录，不入 git；仅仓库内容入库。
