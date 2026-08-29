@@ -1,6 +1,6 @@
 ---
 类型: Obsidian配置说明
-更新日期: 2026-08-13
+更新日期: 2026-08-21
 公开等级: 内部
 tags: [项目管理, Obsidian, 插件, 视觉规范]
 cssclasses: [longform]
@@ -23,7 +23,7 @@ cssclasses: [longform]
 
 维护提示：Style Settings 1.0.9 的上游仓库已归档，但它仍是 Obsidian 官方社区注册表中的稳定插件，本次在 Obsidian 1.13.7 中可加载。自定义 CSS 已写入默认值；即使未来停用 Style Settings，当前视觉方案仍会生效，只会失去图形化调节面板。
 
-`Obsidian Git` 的文件仍保留，但当前未启用。此 Vault 不是 Git 仓库，插件每次启动都会报告“找不到有效仓库”。在建立真实仓库并确认隐私排除规则前，不应重新启用。
+`Obsidian Git` 已启用。Vault 根目录是 Git 仓库，`.gitignore` 排除整个 `私人资料/`。插件配置禁止自动推送。没有远端之前，它只提供本机版本记录，不能代替 Sync 或含私密层的 ZIP。详见 [[项目管理/备份与恢复运维|备份与恢复运维]]。
 
 ## 视觉方案
 
