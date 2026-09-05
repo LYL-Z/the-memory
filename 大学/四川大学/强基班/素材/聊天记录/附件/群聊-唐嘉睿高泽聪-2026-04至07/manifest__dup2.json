@@ -1,0 +1,12 @@
+﻿{
+  "name": "MoreChances",
+  "version_number": "5.2.2",
+  "website_url": "",
+  "description": "可以设置团灭后是否前往竞技场，是否删除存档，还有回血等等",
+  "dependencies": [
+    "BepInEx-BepInExPack-5.4.2100",
+    "nickklmao-MenuLib-1.0.5",
+    "nickklmao-REPOConfig-1.1.6"
+
+  ]
+}

@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>史瓦西黑洞 — 广义相对论可视化 | Schwarzschild Black Hole GR Visualization</title>
+<style>
+  :root { --bg: #000008; --panel-bg: rgba(0,0,12,0.85); --text: #c8d0e0; --accent: #6a9fd8; --warn: #d4844a; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); overflow:hidden; font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif; color:var(--text); }
+  #container { position:fixed; inset:0; z-index:1; }
+  canvas { display:block; }
+  /* ---- overlay panels ---- */
+  #info-panel {
+    position:fixed; z-index:10; top:20px; left:20px;
+    background:var(--panel-bg); border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px; padding:16px 20px; backdrop-filter:blur(12px);
+    font-size:13px; line-height:1.55; max-width:260px;
+    box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  }
+  #info-panel h2 { font-size:16px; font-weight:600; color:var(--accent); margin-bottom:8px; letter-spacing:0.5px; }
+  #info-panel .param { display:flex; justify-content:space-between; margin:2px 0; }
+  #info-panel .param span:last-child { color:#aac8f0; font-weight:500; }
+  #info-panel .divider { border-top:1px solid rgba(255,255,255,0.1); margin:8px 0; }
+  /* ---- controls ---- */
+  #controls {
+    position:fixed; z-index:10; top:20px; right:20px;
+    background:var(--panel-bg); border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px; padding:14px 18px; backdrop-filter:blur(12px);
+    font-size:12px; box-shadow:0 8px 32px rgba(0,0,0,0.5);
+    display:flex; flex-direction:column; gap:8px; min-width:190px;
+  }
+  #controls h3 { font-size:13px; color:var(--accent); margin-bottom:2px; }
+  #controls label { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
+  #controls input[type=checkbox] { accent-color:var(--accent); width:15px; height:15px; }
+  /* ---- annotation labels ---- */
+  .annotation {
+    position:fixed; z-index:8; pointer-events:none;
+    font-size:11px; color:rgba(200,210,230,0.85);
+    text-shadow:0 0 6px rgba(0,0,0,0.8);
+    transform:translate(-50%,-50%); white-space:nowrap;
+    transition:opacity 0.3s;
+  }
+  .annotation .dot { display:inline-block; width:5px; height:5px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+  /* ---- hint ---- */
+  #hint {
+    position:fixed; z-index:10; bottom:24px; left:50%; transform:translateX(-50%);
+    font-size:12px; color:rgba(180,190,210,0.6); pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<!-- Info Panel -->
+<div id="info-panel">
+  <h2>⚫ 史瓦西黑洞</h2>
+  <div class="param"><span>质量 M</span><span>6.5×10⁹ M<sub>☉</sub></span></div>
+  <div class="param"><span>史瓦西半径 R<sub>s</sub></span><span>1.0 (归一化)</span></div>
+  <div class="divider"></div>
+  <div class="param"><span>事件视界</span><span>r = R<sub>s</sub></span></div>
+  <div class="param"><span>光子球</span><span>r = 1.5 R<sub>s</sub></span></div>
+  <div class="param"><span>ISCO 内边界</span><span>r = 3 R<sub>s</sub></span></div>
+  <div class="param"><span>吸积盘外边界</span><span>r ≈ 20 R<sub>s</sub></span></div>
+  <div class="divider"></div>
+  <div class="param"><span>度规</span><span>史瓦西 (a=0)</span></div>
+  <div class="param"><span>温度分布</span><span>T ∝ r<sup>−¾</sup></span></div>
+</div>
+
+<!-- Layer Controls -->
+<div id="controls">
+  <h3>🔬 可视化图层</h3>
+  <label><input type="checkbox" id="toggle-doppler" checked> 多普勒束流效应</label>
+  <label><input type="checkbox" id="toggle-lensing" checked> 引力透镜 (恒星畸变)</label>
+  <label><input type="checkbox" id="toggle-bloom" checked> 体积光散射辉光</label>
+  <label><input type="checkbox" id="toggle-stars" checked> 背景星空 & 爱因斯坦环</label>
+  <label><input type="checkbox" id="toggle-plasma" checked> 螺旋下落等离子体</label>
+</div>
+
+<!-- Annotations container -->
+<div id="annotations">
+  <div class="annotation" id="ann-photon"><span class="dot" style="background:#aaccff;"></span>光子环</div>
+  <div class="annotation" id="ann-horizon"><span class="dot" style="background:#000;"></span>事件视界</div>
+  <div class="annotation" id="ann-disk-inner"><span class="dot" style="background:#88aaff;"></span>吸积盘内缘 (ISCO)</div>
+  <div class="annotation" id="ann-disk-outer"><span class="dot" style="background:#dd6633;"></span>吸积盘外缘</div>
+</div>
+
+<div id="hint">🖱 拖拽旋转 &nbsp;|&nbsp; 滚轮缩放 &nbsp;|&nbsp; 右键平移</div>
+
+<!-- ================ THREE.JS IMPORT MAP ================ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<!-- ================ MAIN APPLICATION ================ -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+// ═══════════════════════════════════════════════════════════
+//  PHYSICS CONSTANTS  (natural units: G = c = 1, Rs = 2GM = 1)
+// ═══════════════════════════════════════════════════════════
+const RS           = 1.0;    // Schwarzschild radius
+const PHOTON_SPHERE = 1.5;   // Photon sphere:  r = 3GM = 1.5 Rs
+const ISCO         = 3.0;    // Innermost Stable Circular Orbit: r = 6GM = 3 Rs
+const DISK_OUTER   = 20.0;   // Accretion disk outer radius
+const GM           = 0.5;    // GM in units where Rs=1
+const C            = 1.0;    // Speed of light in natural units
+const EINSTEIN_R   = 0.035;  // Einstein ring angular radius (radians), tunable
+
+// ═══════════════════════════════════════════════════════════
+//  THREE.JS CORE SETUP
+// ═══════════════════════════════════════════════════════════
+const container = document.getElementById('container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000008);
+scene.fog = new THREE.FogExp2(0x000008, 0.000015);
+
+const camera = new THREE.PerspectiveCamera(
+  55, window.innerWidth / window.innerHeight, 0.02, 2000
+);
+camera.position.set(0, 3.5, 10);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+container.appendChild(renderer.domElement);
+
+// ═══════════════════════════════════════════════════════════
+//  POST-PROCESSING — UnrealBloomPass for volumetric glow
+// ═══════════════════════════════════════════════════════════
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  1.4,   // strength
+  0.5,   // radius (spread)
+  0.55   // threshold (luminance > this → bloom)
+);
+composer.addPass(bloomPass);
+
+// ═══════════════════════════════════════════════════════════
+//  ORBIT CONTROLS
+// ═══════════════════════════════════════════════════════════
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0, 0);
+controls.minDistance = 1.6;
+controls.maxDistance = 80;
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.rotateSpeed = 0.5;
+controls.zoomSpeed = 1.2;
+controls.update();
+
+// ═══════════════════════════════════════════════════════════
+//  LIGHTING (ambient only — disk is self-luminous via shader)
+// ═══════════════════════════════════════════════════════════
+scene.add(new THREE.AmbientLight(0x111122, 0.3));
+
+// ═══════════════════════════════════════════════════════════
+//  SHADER HELPERS
+// ═══════════════════════════════════════════════════════════
+
+/** Blackbody-like RGB from temperature (K). Simplified Planckian locus. */
+function temperatureToRGB(T) {
+  // T in Kelvin; return {r,g,b} in [0,255]
+  let r, g, b;
+  const t = T / 1000; // kiloKelvin
+
+  if (t <= 2.0) {
+    r = 255;
+    g = Math.max(0, Math.min(255, 255 * (t - 0.5) / 1.5));
+    b = Math.max(0, Math.min(255, 50 * (t - 0.5) / 1.5));
+  } else if (t <= 3.5) {
+    r = 255;
+    g = Math.max(0, Math.min(255, 160 + 95 * (t - 2.0) / 1.5));
+    b = Math.max(0, Math.min(255, 50 + 150 * (t - 2.0) / 1.5));
+  } else if (t <= 6.0) {
+    const f = (t - 3.5) / 2.5;
+    r = 255;
+    g = Math.max(0, Math.min(255, 255));
+    b = Math.max(0, Math.min(255, 200 + 55 * f));
+  } else if (t <= 10.0) {
+    const f = (t - 6.0) / 4.0;
+    r = 255 - 30 * f;
+    g = 255 - 30 * f;
+    b = 255;
+  } else {
+    const f = Math.min(1, (t - 10.0) / 20.0);
+    r = 180 - 60 * f;
+    g = 200 - 70 * f;
+    b = 255;
+  }
+  return { r: Math.round(r), g: Math.round(g), b: Math.round(b) };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  STARFIELD — procedural texture + lensed sky sphere
+// ═══════════════════════════════════════════════════════════
+function generateStarTexture(width, height, starCount) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  // Deep space background
+  const bgGrad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width*0.7);
+  bgGrad.addColorStop(0, '#050515');
+  bgGrad.addColorStop(0.5, '#020210');
+  bgGrad.addColorStop(1, '#000008');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, width, height);
+
+  // Subtle nebulosity patches
+  for (let i = 0; i < 40; i++) {
+    const nx = Math.random() * width;
+    const ny = Math.random() * height;
+    const nr = 40 + Math.random() * 200;
+    const ng = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr);
+    const hue = Math.random() < 0.5 ? '180,120,220' : '220,180,255';
+    ng.addColorStop(0, `rgba(${hue},0.04)`);
+    ng.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = ng;
+    ctx.fillRect(nx-nr, ny-nr, nr*2, nr*2);
+  }
+
+  // Stars
+  for (let i = 0; i < starCount; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const brightness = Math.pow(Math.random(), 5); // power-law: many dim, few bright
+    const temp = 3000 + Math.random() * 27000;     // 3000K – 30000K
+    const col = temperatureToRGB(temp);
+    const size = 0.3 + brightness * 3.5;
+
+    // Bokeh simulation: bright stars get soft glow, dim stars are sharp
+    if (brightness > 0.7) {
+      // Soft glow (out-of-focus bokeh)
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, size * 3);
+      glow.addColorStop(0, `rgba(${col.r},${col.g},${col.b},${brightness})`);
+      glow.addColorStop(0.3, `rgba(${col.r},${col.g},${col.b},${brightness*0.6})`);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(x - size*3, y - size*3, size*6, size*6);
+    }
+
+    // Sharp core
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${col.r},${col.g},${col.b},${Math.min(1, brightness*1.2)})`;
+    ctx.fill();
+
+    // Diffraction spikes on brightest stars
+    if (brightness > 0.92) {
+      ctx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${brightness*0.3})`;
+      ctx.lineWidth = 0.5;
+      for (let a = 0; a < 4; a++) {
+        const angle = a * Math.PI / 2 + Math.random() * 0.1;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(angle) * size * 10, y + Math.sin(angle) * size * 10);
+        ctx.stroke();
+      }
+    }
+  }
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+// Sky sphere vertex shader — passes world direction for lensing
+const skyVert = /* glsl */ `
+varying vec3 vWorldDir;
+varying vec3 vWorldPos;
+void main() {
+  vec4 worldPos = modelMatrix * vec4(position, 1.0);
+  vWorldPos = worldPos.xyz;
+  vWorldDir = normalize(worldPos.xyz);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`;
+
+// Sky sphere fragment shader — gravitational lensing of stars
+const skyFrag = /* glsl */ `
+varying vec3 vWorldDir;
+varying vec3 vWorldPos;
+uniform sampler2D uStarTex;
+uniform vec3 uCameraPos;
+uniform float uEinsteinR;
+uniform bool uLensingEnabled;
+uniform float uTime;
+
+// Convert direction → equirectangular UV
+vec2 dirToUV(vec3 d) {
+  float u = 0.5 + atan(d.z, d.x) / (2.0 * 3.1415926535);
+  float v = 0.5 - asin(clamp(d.y, -1.0, 1.0)) / 3.1415926535;
+  return vec2(u, v);
+}
+
+// Convert UV → direction
+vec3 uvToDir(vec2 uv) {
+  float phi = (uv.x - 0.5) * 2.0 * 3.1415926535;
+  float theta = (0.5 - uv.y) * 3.1415926535;
+  return vec3(cos(theta)*cos(phi), sin(theta), cos(theta)*sin(phi));
+}
+
+void main() {
+  vec3 bhDir = normalize(-uCameraPos); // direction to black hole from camera
+  vec3 obsDir = normalize(vWorldDir);
+  float cosAng = dot(obsDir, bhDir);
+  float angle = acos(clamp(cosAng, -1.0, 1.0));
+
+  vec2 uv;
+  if (uLensingEnabled && angle > 0.0001 && uEinsteinR > 0.0) {
+    // Gravitational lens equation: θ_obs = θ_true + θ_E²/θ_true
+    // Solve for θ_true:  θ_true² - θ_obs·θ_true + θ_E² = 0
+    // θ_true = (θ_obs + sqrt(θ_obs² - 4θ_E²)) / 2   (primary image)
+    float disc = angle * angle - 4.0 * uEinsteinR * uEinsteinR;
+
+    float thetaTrue;
+    if (disc > 0.0) {
+      thetaTrue = (angle + sqrt(disc)) / 2.0;
+    } else {
+      // Inside caustic: map to Einstein ring
+      thetaTrue = uEinsteinR;
+    }
+
+    // Rotate bhDir by thetaTrue around axis perpendicular to (bhDir, obsDir)
+    vec3 axis = normalize(cross(bhDir, obsDir));
+    if (length(axis) < 0.001) axis = vec3(0.0, 1.0, 0.0);
+    float ct = cos(thetaTrue);
+    float st = sin(thetaTrue);
+    // Rodrigues rotation: bhDir rotated by thetaTrue around axis
+    vec3 srcDir = bhDir * ct + cross(axis, bhDir) * st + axis * dot(axis, bhDir) * (1.0 - ct);
+    srcDir = normalize(srcDir);
+    uv = dirToUV(srcDir);
+  } else {
+    uv = dirToUV(obsDir);
+  }
+
+  vec4 starColor = texture2D(uStarTex, uv);
+  // Slight darkening near black hole to simulate photon capture
+  float edgeFade = smoothstep(0.0, 0.08, angle);
+  starColor.rgb *= mix(0.15, 1.0, edgeFade);
+
+  gl_FragColor = starColor;
+}`;
+
+// Create starfield
+const starTex = generateStarTexture(2048, 1024, 18000);
+starTex.colorSpace = THREE.SRGBColorSpace;
+
+const skyGeo = new THREE.SphereGeometry(500, 128, 64);
+const skyMat = new THREE.ShaderMaterial({
+  uniforms: {
+    uStarTex: { value: starTex },
+    uCameraPos: { value: new THREE.Vector3() },
+    uEinsteinR: { value: EINSTEIN_R },
+    uLensingEnabled: { value: true },
+    uTime: { value: 0 },
+  },
+  vertexShader: skyVert,
+  fragmentShader: skyFrag,
+  side: THREE.BackSide,
+  depthWrite: false,
+  depthTest: true,
+});
+const skySphere = new THREE.Mesh(skyGeo, skyMat);
+skySphere.name = 'starfield';
+scene.add(skySphere);
+
+// ═══════════════════════════════════════════════════════════
+//  EVENT HORIZON — pure black sphere, absolutely no light
+// ═══════════════════════════════════════════════════════════
+const horizonGeo = new THREE.SphereGeometry(RS, 96, 64);
+const horizonMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+const horizon = new THREE.Mesh(horizonGeo, horizonMat);
+horizon.name = 'eventHorizon';
+scene.add(horizon);
+
+// ═══════════════════════════════════════════════════════════
+//  PHOTON RING — thin, brilliant ring at photon sphere
+// ═══════════════════════════════════════════════════════════
+const photonRingGeo = new THREE.TorusGeometry(PHOTON_SPHERE, 0.03, 32, 256);
+const photonRingMat = new THREE.ShaderMaterial({
+  uniforms: {
+    uTime: { value: 0 },
+  },
+  vertexShader: /* glsl */ `
+    varying vec3 vPos;
+    varying vec3 vNormal;
+    void main() {
+      vec4 worldPos = modelMatrix * vec4(position, 1.0);
+      vPos = worldPos.xyz;
+      vNormal = normalize(mat3(modelMatrix) * normal);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  fragmentShader: /* glsl */ `
+    varying vec3 vPos;
+    varying vec3 vNormal;
+    uniform float uTime;
+    void main() {
+      // Bright blue-white emissive ring — luminance well above 1 triggers bloom
+      float brightness = 2.5 + 0.5 * sin(vPos.x * 20.0 + uTime * 2.0) * cos(vPos.z * 20.0 + uTime);
+      vec3 col = vec3(0.7, 0.85, 1.0) * brightness;
+      float alpha = 1.0;
+      gl_FragColor = vec4(col, alpha);
+    }`,
+  transparent: true,
+  depthWrite: true,
+  blending: THREE.AdditiveBlending,
+});
+const photonRing = new THREE.Mesh(photonRingGeo, photonRingMat);
+photonRing.rotation.x = Math.PI / 2; // ring in XZ plane
+photonRing.name = 'photonRing';
+scene.add(photonRing);
+
+// ═══════════════════════════════════════════════════════════
+//  ACCRETION DISK — custom shader with temperature gradient,
+//  Doppler beaming, and radial structure
+// ═══════════════════════════════════════════════════════════
+
+const diskVert = /* glsl */ `
+varying vec3 vWorldPos;
+varying vec3 vWorldNormal;
+varying vec2 vUv;
+void main() {
+  vec4 worldPos = modelMatrix * vec4(position, 1.0);
+  vWorldPos = worldPos.xyz;
+  vWorldNormal = normalize(mat3(modelMatrix) * normal);
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`;
+
+const diskFrag = /* glsl */ `
+varying vec3 vWorldPos;
+varying vec3 vWorldNormal;
+varying vec2 vUv;
+uniform vec3 uCameraPos;
+uniform bool uDopplerEnabled;
+uniform float uTime;
+
+// Blackbody-like disk color: r in [ISCO, DISK_OUTER]
+vec3 diskColor(float r) {
+  float rMin = 3.0;
+  float rMax = 20.0;
+  float t = clamp((r - rMin) / (rMax - rMin), 0.0, 1.0);
+
+  // Temperature proxy: T ∝ r^(-3/4)
+  // Inner: ~10^8 K → UV/X-ray → mapped to intense blue-white
+  // Middle: ~10^5-10^6 K → white-yellow
+  // Outer: ~3000-10000 K → orange-red
+  
+  vec3 col;
+  if (t < 0.15) {
+    // Innermost: intense blue-white (X-ray hot)
+    col = mix(vec3(0.55, 0.75, 1.0), vec3(0.7, 0.85, 1.0), t / 0.15);
+  } else if (t < 0.35) {
+    col = mix(vec3(0.7, 0.85, 1.0), vec3(1.0, 0.95, 0.85), (t - 0.15) / 0.2);
+  } else if (t < 0.6) {
+    col = mix(vec3(1.0, 0.95, 0.85), vec3(1.0, 0.65, 0.25), (t - 0.35) / 0.25);
+  } else if (t < 0.85) {
+    col = mix(vec3(1.0, 0.65, 0.25), vec3(0.85, 0.25, 0.06), (t - 0.6) / 0.25);
+  } else {
+    col = mix(vec3(0.85, 0.25, 0.06), vec3(0.5, 0.08, 0.02), (t - 0.85) / 0.15);
+  }
+  return col;
+}
+
+void main() {
+  float r = length(vWorldPos.xz);
+
+  // Outside disk radial extent → transparent
+  if (r < 2.95 || r > 20.5) discard;
+
+  // --- Disk thickness: visible from grazing angles ---
+  float height = abs(vWorldPos.y);
+  float scaleHeight = 0.08 + 0.04 * (r - 3.0); // flaring disk
+  float thicknessAlpha = exp(-height / scaleHeight);
+  if (thicknessAlpha < 0.02) discard;
+
+  // --- Temperature gradient color ---
+  vec3 col = diskColor(r);
+
+  // --- Luminosity follows T^4 (Stefan–Boltzmann) ---
+  float T_ratio = pow(r / 1.0, -0.75); // T ∝ r^(-3/4)
+  float luminosity = pow(T_ratio, 4.0);
+  luminosity = clamp(luminosity * 3.5, 0.3, 12.0); // scale for HDR
+
+  // --- Doppler beaming ---
+  if (uDopplerEnabled) {
+    // Keplerian velocity: v_kep = sqrt(GM/r), GM=0.5, c=1
+    float vKep = sqrt(0.5 / r);
+    // Tangential direction (counterclockwise in XZ plane, y-up)
+    vec3 radial = normalize(vec3(vWorldPos.x, 0.0, vWorldPos.z));
+    vec3 tangential = vec3(-radial.z, 0.0, radial.x); // cross(up, radial)
+    vec3 velocity = tangential * vKep;
+
+    vec3 toCamera = normalize(uCameraPos - vWorldPos);
+    float cosTheta = dot(normalize(velocity), toCamera);
+    float beta = vKep * cosTheta; // projected toward (+) or away (-) from observer
+
+    float gamma = 1.0 / sqrt(1.0 - vKep * vKep);
+    float doppler = 1.0 / (gamma * (1.0 - beta));
+    // Relativistic beaming: I_obs / I_emit = δ^3 for thermal spectrum
+    float beamFactor = pow(doppler, 3.0);
+
+    // Blueshift (approaching) → brighter+bluer; redshift (receding) → dimmer+redder
+    col *= beamFactor;
+    if (beta > 0.0) {
+      // Blueshift: shift color toward blue
+      col = mix(col, col * vec3(0.8, 0.9, 1.3), beta * 0.7);
+    } else {
+      // Redshift: shift color toward red
+      col = mix(col, col * vec3(1.3, 0.7, 0.5), -beta * 0.7);
+    }
+  }
+
+  // --- Gravitational redshift darkening near ISCO ---
+  float redshiftFactor = sqrt(1.0 - 1.0 / r); // sqrt(1 - Rs/r)
+  col *= mix(0.5, 1.0, smoothstep(2.95, 5.0, r));
+
+  // --- Combine ---
+  float alpha = thicknessAlpha * clamp(luminosity * 0.15, 0.1, 1.0);
+  col *= luminosity;
+
+  gl_FragColor = vec4(col, alpha);
+}`;
+
+// Create disk plane (XZ plane)
+const diskGeo = new THREE.PlaneGeometry(DISK_OUTER * 2.1, DISK_OUTER * 2.1, 256, 256);
+const diskMat = new THREE.ShaderMaterial({
+  uniforms: {
+    uCameraPos: { value: new THREE.Vector3() },
+    uDopplerEnabled: { value: true },
+    uTime: { value: 0 },
+  },
+  vertexShader: diskVert,
+  fragmentShader: diskFrag,
+  transparent: true,
+  depthWrite: true,
+  side: THREE.DoubleSide,
+});
+const disk = new THREE.Mesh(diskGeo, diskMat);
+disk.rotation.x = -Math.PI / 2; // rotate XY plane → XZ plane
+disk.name = 'accretionDisk';
+scene.add(disk);
+
+// Stratified disk layers for vertical thickness structure
+// Scale height H(r) ∝ r^(9/8) (flaring disk). We sample several heights.
+const diskLayers = [];
+const layerHeights = [0.0, 0.012, -0.012, 0.025, -0.025, 0.04, -0.04, 0.06, -0.06, 0.085, -0.085, 0.12, -0.12];
+for (const h of layerHeights) {
+  const segs = h === 0 ? 256 : 100;
+  const geo = new THREE.PlaneGeometry(DISK_OUTER * 2.1, DISK_OUTER * 2.1, segs, segs);
+  const mat = diskMat.clone();
+  mat.uniforms = diskMat.uniforms; // share uniform refs so all layers update together
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = h;
+  mesh.name = 'accretionDisk_layer_' + h;
+  scene.add(mesh);
+  diskLayers.push(mesh);
+}
+
+// Volumetric edge rings — visible when disk viewed edge-on
+// These torus rings trace the disk's radial extent at the scale height
+for (let r = 3.5; r <= 18; r += 1.2) {
+  const scaleH = 0.06 + 0.04 * (r - 3.0);
+  const edgeGeo = new THREE.TorusGeometry(r, scaleH, 8, 80);
+  const edgeMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uCameraPos: diskMat.uniforms.uCameraPos,
+      uDopplerEnabled: diskMat.uniforms.uDopplerEnabled,
+      uTime: diskMat.uniforms.uTime,
+    },
+    vertexShader: /* glsl */ `
+      varying vec3 vWorldPos;
+      varying vec3 vNormal;
+      void main() {
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        vNormal = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: /* glsl */ `
+      varying vec3 vWorldPos;
+      varying vec3 vNormal;
+      uniform vec3 uCameraPos;
+      uniform bool uDopplerEnabled;
+      uniform float uTime;
+      void main() {
+        float r = length(vWorldPos.xz);
+        float t = clamp((r - 3.0) / 17.0, 0.0, 1.0);
+        // Match disk temperature gradient
+        vec3 col;
+        if (t < 0.15) col = mix(vec3(0.55,0.75,1.0), vec3(0.7,0.85,1.0), t/0.15);
+        else if (t < 0.35) col = mix(vec3(0.7,0.85,1.0), vec3(1.0,0.95,0.85), (t-0.15)/0.2);
+        else if (t < 0.6) col = mix(vec3(1.0,0.95,0.85), vec3(1.0,0.65,0.25), (t-0.35)/0.25);
+        else if (t < 0.85) col = mix(vec3(1.0,0.65,0.25), vec3(0.85,0.25,0.06), (t-0.6)/0.25);
+        else col = mix(vec3(0.85,0.25,0.06), vec3(0.5,0.08,0.02), (t-0.85)/0.15);
+
+        float T_ratio = pow(r, -0.75);
+        float lum = pow(T_ratio, 4.0) * 2.5;
+
+        // Doppler for edge ring
+        if (uDopplerEnabled) {
+          float vKep = sqrt(0.5 / r);
+          vec3 radial = normalize(vec3(vWorldPos.x, 0.0, vWorldPos.z));
+          vec3 tangential = vec3(-radial.z, 0.0, radial.x);
+          vec3 vel = tangential * vKep;
+          vec3 toCam = normalize(uCameraPos - vWorldPos);
+          float cosTh = dot(normalize(vel), toCam);
+          float beta = vKep * cosTh;
+          float gamma = 1.0 / sqrt(1.0 - vKep*vKep);
+          float doppler = 1.0 / (gamma * (1.0 - beta));
+          col *= pow(doppler, 3.0);
+        }
+
+        // Edge ring visible mainly from grazing angles
+        vec3 viewDir = normalize(uCameraPos - vWorldPos);
+        vec3 diskUp = vec3(0.0, 1.0, 0.0);
+        float edgeAngle = abs(dot(viewDir, diskUp)); // 0=edge-on, 1=face-on
+        float alpha = mix(0.35, 0.04, edgeAngle);  // brighter edge-on
+
+        col *= lum * alpha;
+        gl_FragColor = vec4(col, alpha);
+      }`,
+    transparent: true,
+    depthWrite: true,
+    blending: THREE.AdditiveBlending,
+  });
+  const edgeRing = new THREE.Mesh(edgeGeo, edgeMat);
+  edgeRing.rotation.x = Math.PI / 2;
+  edgeRing.name = 'diskEdge_r' + r.toFixed(1);
+  scene.add(edgeRing);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INNER HOT CORONA — extra bright ring just outside ISCO
+// ═══════════════════════════════════════════════════════════
+const coronaGeo = new THREE.TorusGeometry(3.2, 0.15, 16, 200);
+const coronaMat = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 } },
+  vertexShader: /* glsl */ `
+    varying vec3 vPos;
+    void main() {
+      vec4 wp = modelMatrix * vec4(position, 1.0);
+      vPos = wp.xyz;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  fragmentShader: /* glsl */ `
+    varying vec3 vPos;
+    uniform float uTime;
+    void main() {
+      float r = length(vPos.xz);
+      float brightness = 1.8 + 0.3 * sin(r * 15.0 + uTime * 3.0);
+      vec3 col = vec3(0.6, 0.8, 1.0) * brightness;
+      gl_FragColor = vec4(col, 0.7);
+    }`,
+  transparent: true,
+  depthWrite: true,
+  blending: THREE.AdditiveBlending,
+});
+const corona = new THREE.Mesh(coronaGeo, coronaMat);
+corona.rotation.x = Math.PI / 2;
+corona.name = 'innerCorona';
+scene.add(corona);
+
+// ═══════════════════════════════════════════════════════════
+//  IN-FALLING PLASMA PARTICLES — spiral accretion streams
+// ═══════════════════════════════════════════════════════════
+const PLASMA_COUNT = 6000;
+const plasmaGeo = new THREE.BufferGeometry();
+const plasmaPositions = new Float32Array(PLASMA_COUNT * 3);
+const plasmaColors = new Float32Array(PLASMA_COUNT * 3);
+const plasmaSizes = new Float32Array(PLASMA_COUNT);
+
+// Per-particle state (stored in JS arrays)
+const particleR = new Float32Array(PLASMA_COUNT);
+const particlePhi = new Float32Array(PLASMA_COUNT);
+const particleSpeed = new Float32Array(PLASMA_COUNT);
+const particleHeight = new Float32Array(PLASMA_COUNT);
+
+for (let i = 0; i < PLASMA_COUNT; i++) {
+  particleR[i] = ISCO + Math.random() * (DISK_OUTER - ISCO);
+  particlePhi[i] = Math.random() * Math.PI * 2;
+  particleSpeed[i] = 0.3 + Math.random() * 1.5;
+  particleHeight[i] = (Math.random() - 0.5) * 0.8;
+
+  const i3 = i * 3;
+  plasmaPositions[i3] = particleR[i] * Math.cos(particlePhi[i]);
+  plasmaPositions[i3 + 1] = particleHeight[i];
+  plasmaPositions[i3 + 2] = particleR[i] * Math.sin(particlePhi[i]);
+
+  // Color: bluer near inner, redder near outer
+  const t = (particleR[i] - ISCO) / (DISK_OUTER - ISCO);
+  const col = new THREE.Color();
+  col.setHSL(0.6 - t * 0.55, 0.9, 0.5 + (1 - t) * 0.5);
+  plasmaColors[i3] = col.r;
+  plasmaColors[i3 + 1] = col.g;
+  plasmaColors[i3 + 2] = col.b;
+
+  plasmaSizes[i] = 0.02 + Math.random() * 0.06;
+}
+
+plasmaGeo.setAttribute('position', new THREE.BufferAttribute(plasmaPositions, 3));
+plasmaGeo.setAttribute('color', new THREE.BufferAttribute(plasmaColors, 3));
+plasmaGeo.setAttribute('size', new THREE.BufferAttribute(plasmaSizes, 1));
+
+// Particle sprite texture
+const spriteCanvas = document.createElement('canvas');
+spriteCanvas.width = 32;
+spriteCanvas.height = 32;
+const sctx = spriteCanvas.getContext('2d');
+const grad = sctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+grad.addColorStop(0, 'rgba(255,255,255,1)');
+grad.addColorStop(0.15, 'rgba(200,220,255,0.8)');
+grad.addColorStop(0.5, 'rgba(100,150,255,0.2)');
+grad.addColorStop(1, 'rgba(0,0,0,0)');
+sctx.fillStyle = grad;
+sctx.fillRect(0, 0, 32, 32);
+const spriteTex = new THREE.CanvasTexture(spriteCanvas);
+
+const plasmaMat = new THREE.PointsMaterial({
+  size: 0.08,
+  map: spriteTex,
+  vertexColors: true,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  transparent: true,
+  opacity: 0.8,
+});
+const plasmaPoints = new THREE.Points(plasmaGeo, plasmaMat);
+plasmaPoints.name = 'plasma';
+scene.add(plasmaPoints);
+
+// ═══════════════════════════════════════════════════════════
+//  AMBIENT GLOW HALO — subtle scattering around disk
+// ═══════════════════════════════════════════════════════════
+const haloGeo = new THREE.RingGeometry(2.8, 6.0, 128);
+const haloMat = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 } },
+  vertexShader: /* glsl */ `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  fragmentShader: /* glsl */ `
+    varying vec2 vUv;
+    uniform float uTime;
+    void main() {
+      float d = length(vUv - 0.5) * 2.0;
+      float alpha = exp(-d * 4.0) * 0.08;
+      vec3 col = mix(vec3(0.5, 0.7, 1.0), vec3(0.2, 0.3, 0.6), d);
+      gl_FragColor = vec4(col, alpha);
+    }`,
+  transparent: true,
+  depthWrite: false,
+  side: THREE.DoubleSide,
+  blending: THREE.AdditiveBlending,
+});
+const halo = new THREE.Mesh(haloGeo, haloMat);
+halo.rotation.x = -Math.PI / 2;
+halo.position.y = 0.001;
+halo.name = 'glowHalo';
+scene.add(halo);
+
+// Second halo further out
+const halo2 = new THREE.Mesh(
+  new THREE.RingGeometry(5.5, 12.0, 128),
+  haloMat.clone()
+);
+halo2.rotation.x = -Math.PI / 2;
+halo2.position.y = 0.001;
+halo2.name = 'glowHaloOuter';
+scene.add(halo2);
+
+// ═══════════════════════════════════════════════════════════
+//  REFERENCE RING — subtle circle at ISCO
+// ═══════════════════════════════════════════════════════════
+const iscoRingGeo = new THREE.TorusGeometry(ISCO, 0.015, 8, 200);
+const iscoRingMat = new THREE.MeshBasicMaterial({
+  color: 0x334466,
+  transparent: true,
+  opacity: 0.4,
+  depthTest: true,
+});
+const iscoRing = new THREE.Mesh(iscoRingGeo, iscoRingMat);
+iscoRing.rotation.x = Math.PI / 2;
+iscoRing.name = 'iscoMarker';
+scene.add(iscoRing);
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+const state = {
+  dopplerEnabled: true,
+  lensingEnabled: true,
+  bloomEnabled: true,
+  starsEnabled: true,
+  plasmaEnabled: true,
+};
+
+// ═══════════════════════════════════════════════════════════
+//  UI HANDLERS
+// ═══════════════════════════════════════════════════════════
+document.getElementById('toggle-doppler').addEventListener('change', (e) => {
+  state.dopplerEnabled = e.target.checked;
+  diskMat.uniforms.uDopplerEnabled.value = state.dopplerEnabled;
+  // All disk layers & edge rings share the same uniform references — automatically updated
+});
+
+document.getElementById('toggle-lensing').addEventListener('change', (e) => {
+  state.lensingEnabled = e.target.checked;
+  skyMat.uniforms.uLensingEnabled.value = state.lensingEnabled;
+});
+
+document.getElementById('toggle-bloom').addEventListener('change', (e) => {
+  state.bloomEnabled = e.target.checked;
+  bloomPass.strength = state.bloomEnabled ? 1.4 : 0.0;
+});
+
+document.getElementById('toggle-stars').addEventListener('change', (e) => {
+  state.starsEnabled = e.target.checked;
+  skySphere.visible = state.starsEnabled;
+});
+
+document.getElementById('toggle-plasma').addEventListener('change', (e) => {
+  state.plasmaEnabled = e.target.checked;
+  plasmaPoints.visible = state.plasmaEnabled;
+});
+
+// ═══════════════════════════════════════════════════════════
+//  ANNOTATION PROJECTION
+// ═══════════════════════════════════════════════════════════
+const annotations = {
+  photon: { el: document.getElementById('ann-photon'), pos: new THREE.Vector3(PHOTON_SPHERE, 0.3, 0) },
+  horizon: { el: document.getElementById('ann-horizon'), pos: new THREE.Vector3(RS * 0.7, 0.55, 0) },
+  diskInner: { el: document.getElementById('ann-disk-inner'), pos: new THREE.Vector3(ISCO, 0.2, 0) },
+  diskOuter: { el: document.getElementById('ann-disk-outer'), pos: new THREE.Vector3(DISK_OUTER, 0.3, 0) },
+};
+
+function updateAnnotations() {
+  const halfW = window.innerWidth / 2;
+  const halfH = window.innerHeight / 2;
+  for (const [key, ann] of Object.entries(annotations)) {
+    const vec = ann.pos.clone().project(camera);
+    const x = (vec.x * halfW) + halfW;
+    const y = -(vec.y * halfH) + halfH;
+    const behindCamera = vec.z > 1;
+    ann.el.style.left = x + 'px';
+    ann.el.style.top = y + 'px';
+    ann.el.style.opacity = behindCamera ? '0' : '0.85';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ANIMATION LOOP
+// ═══════════════════════════════════════════════════════════
+const clock = new THREE.Clock();
+
+function animate(timestamp) {
+  requestAnimationFrame(animate);
+
+  const dt = Math.min(clock.getDelta(), 0.1);
+  const elapsed = timestamp * 0.001;
+  controls.update();
+
+  // Update camera position uniform for shaders
+  const camPos = camera.position;
+  skyMat.uniforms.uCameraPos.value.copy(camPos);
+  skyMat.uniforms.uTime.value = elapsed;
+  diskMat.uniforms.uCameraPos.value.copy(camPos);
+  diskMat.uniforms.uTime.value = elapsed;
+  photonRingMat.uniforms.uTime.value = elapsed;
+  coronaMat.uniforms.uTime.value = elapsed;
+
+  // Animate plasma particles
+  if (state.plasmaEnabled) {
+    const posArr = plasmaGeo.attributes.position.array;
+    const colArr = plasmaGeo.attributes.color.array;
+    for (let i = 0; i < PLASMA_COUNT; i++) {
+      let r = particleR[i];
+      let phi = particlePhi[i];
+      const spd = particleSpeed[i];
+
+      // Radial infall: accelerates near horizon, but time dilation slows visible motion
+      const gravFactor = Math.sqrt(Math.abs(1.0 - RS / r)); // sqrt(1 - Rs/r), time dilation
+      const dr = -0.015 * spd * dt / Math.sqrt(r);
+      const dphi = 0.08 * spd * dt / (r * r);
+
+      r += dr * gravFactor;
+      phi += dphi * gravFactor;
+
+      // Reset particle if it reaches event horizon vicinity
+      if (r < 1.08) {
+        r = ISCO + Math.random() * (DISK_OUTER - ISCO);
+        phi = Math.random() * Math.PI * 2;
+        particleHeight[i] = (Math.random() - 0.5) * 0.6;
+      }
+
+      particleR[i] = r;
+      particlePhi[i] = phi;
+
+      // Update position buffer
+      const i3 = i * 3;
+      posArr[i3] = r * Math.cos(phi);
+      posArr[i3 + 1] = particleHeight[i] * (1.0 - Math.exp(-(r - 1.0) * 2.0)); // compress toward midplane near horizon
+      posArr[i3 + 2] = r * Math.sin(phi);
+
+      // Redshift color: particles near horizon become redder and dimmer
+      const t = (r - ISCO) / (DISK_OUTER - ISCO);
+      const redshiftFade = clampZero(gravFactor);
+      const col = new THREE.Color();
+      col.setHSL(
+        0.6 - t * 0.5,
+        0.9,
+        (0.3 + (1 - t) * 0.6) * redshiftFade
+      );
+      colArr[i3] = col.r;
+      colArr[i3 + 1] = col.g;
+      colArr[i3 + 2] = col.b;
+    }
+    plasmaGeo.attributes.position.needsUpdate = true;
+    plasmaGeo.attributes.color.needsUpdate = true;
+  }
+
+  // Rotate photon ring corona slightly for shimmer
+  photonRing.rotation.z += dt * 0.3;
+  corona.rotation.z += dt * 0.15;
+
+  // Update annotations
+  updateAnnotations();
+
+  // Render
+  if (state.bloomEnabled) {
+    composer.render();
+  } else {
+    renderer.render(scene, camera);
+  }
+}
+
+function clampZero(v) { return Math.max(0, Math.min(1, v)); }
+
+// ═══════════════════════════════════════════════════════════
+//  RESIZE HANDLER
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('keydown', (e) => {
+  switch (e.key.toLowerCase()) {
+    case 'd': // Toggle Doppler
+      document.getElementById('toggle-doppler').click(); break;
+    case 'l': // Toggle Lensing
+      document.getElementById('toggle-lensing').click(); break;
+    case 'b': // Toggle Bloom
+      document.getElementById('toggle-bloom').click(); break;
+    case 's': // Toggle Stars
+      document.getElementById('toggle-stars').click(); break;
+    case 'p': // Toggle Plasma
+      document.getElementById('toggle-plasma').click(); break;
+    case 'r': // Reset camera
+      camera.position.set(0, 3.5, 10);
+      controls.target.set(0, 0, 0);
+      controls.update();
+      break;
+    case 'f': // Front view (edge-on to disk)
+      camera.position.set(0, 0.05, 14);
+      controls.target.set(0, 0, 0);
+      controls.update();
+      break;
+    case 't': // Top view
+      camera.position.set(0, 16, 0.5);
+      controls.target.set(0, 0, 0);
+      controls.update();
+      break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════════════════════
+console.log('🕳️  史瓦西黑洞 — 广义相对论可视化 已就绪');
+console.log('   质量: 6.5×10⁹ M☉  |  史瓦西半径: Rs=1 (归一化)');
+console.log('   事件视界: r=Rs  |  光子球: r=1.5Rs  |  ISCO: r=3Rs');
+console.log('   快捷键: D=多普勒 L=透镜 B=辉光 S=星空 P=等离子 R=重置 F=正面 T=俯视');
+console.log('   拖拽旋转 | 滚轮缩放 | 右键平移');
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
