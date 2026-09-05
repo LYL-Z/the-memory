@@ -1,0 +1,9 @@
+{
+    "name": "Simplified_Chinese_Translation",
+    "version_number": "1.2.0",
+    "website_url": "",
+    "description": "将游戏本体文本内容翻译成简体中文，包括一部分模组",
+    "dependencies":[
+		"BepInEx-BepInExPack-5.4.2100"
+	]
+}
