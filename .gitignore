@@ -11,3 +11,4 @@
 # 智能体运行时数据与临时脚本不纳入知识库版本记录。
 /.workbuddy/
 /scripts/
+/.wbapp_*.genie
