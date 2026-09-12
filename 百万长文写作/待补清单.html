@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>待补清单 · 三场已入库</title>
+  <style>
+    :root {
+      --ink: #1c1915;
+      --muted: #5c564c;
+      --line: #d8d0c4;
+      --paper: #f6f1e8;
+      --card: #fffdf8;
+      --accent: #8b3a2a;
+      --ok: #2f5d3a;
+      --warn: #8a5a12;
+      --chip: #eee6d8;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Iowan Old Style", "Palatino Linotype", "Songti SC", "Source Han Serif SC", serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+    header {
+      padding: 2.2rem 1.25rem 1.1rem;
+      max-width: 54rem;
+      margin: 0 auto;
+      border-bottom: 1px solid var(--line);
+    }
+    header p.kicker {
+      margin: 0 0 .4rem;
+      letter-spacing: .16em;
+      font-size: .72rem;
+      color: var(--accent);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    h1 { font-size: 1.75rem; font-weight: 600; margin: 0 0 .55rem; }
+    .lead { margin: 0; color: var(--muted); }
+    .toolbar {
+      max-width: 54rem;
+      margin: 0 auto;
+      padding: 1rem 1.25rem .75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      position: sticky;
+      top: 0;
+      background: color-mix(in srgb, var(--paper) 90%, white);
+      z-index: 2;
+    }
+    .toolbar button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: .35rem .85rem;
+      font: 600 .82rem/1.3 ui-sans-serif, system-ui, sans-serif;
+      cursor: pointer;
+    }
+    .toolbar button.active { border-color: var(--accent); color: var(--accent); }
+    main { max-width: 54rem; margin: 0 auto; padding: .4rem 1.25rem 4rem; }
+    section { margin-top: 2rem; }
+    h2 {
+      font-size: 1.18rem;
+      margin: 0 0 .35rem;
+      padding-bottom: .35rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .hint { color: var(--muted); margin: 0 0 1rem; }
+    article {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem 1.1rem 1.05rem;
+      margin: 0 0 1rem;
+    }
+    article[data-tier="done"] { opacity: .92; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-bottom: .4rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .chip {
+      background: var(--chip);
+      border-radius: 999px;
+      padding: .12rem .55rem;
+      font-size: .72rem;
+      color: var(--muted);
+    }
+    .chip.need { background: #f3e0d6; color: var(--accent); }
+    .chip.done { background: #e4eadf; color: var(--ok); }
+    .chip.warn { background: #efe4c8; color: var(--warn); }
+    h3 { margin: .1rem 0 .5rem; font-size: 1.08rem; }
+    .scene, .already, .only, .ex, .ifnot, .ans, .note {
+      margin: .4rem 0 0;
+      padding: .6rem .75rem;
+      border-radius: 8px;
+      font-size: .94rem;
+    }
+    .scene { background: #efe6d6; }
+    .already { background: #e8eee4; }
+    .only { background: #f3e4dc; font-weight: 600; }
+    .ex { background: #ece8f2; font-family: ui-sans-serif, system-ui, sans-serif; font-size: .88rem; }
+    .ifnot { background: #f6efe6; }
+    .ans { background: #e4eadf; }
+    .note { background: #efe7e2; }
+    label {
+      display: block;
+      margin: .7rem 0 .25rem;
+      font-size: .78rem;
+      color: var(--muted);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: .55rem .65rem;
+      font: 1rem/1.5 ui-sans-serif, system-ui, sans-serif;
+      background: #fff;
+    }
+    textarea { min-height: 6rem; resize: vertical; }
+    footer {
+      max-width: 54rem;
+      margin: 0 auto;
+      padding: 0 1.25rem 3rem;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .hide { display: none; }
+    ul.tight { margin: .25rem 0 0 1.1rem; padding: 0; }
+    @media print {
+      .toolbar { display: none; }
+      article { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="kicker">《刘佑林的19年回忆录》 · 2026-09-12 夜</p>
+    <h1>没有必须再答的场</h1>
+    <p class="lead">第 9–11 场已经写入知识库。西安哪一天去哪一处、颜色题怎么答：你说过排不出／不记得，<strong>不追</strong>。下面「还空着」只剩两件可选项：点得出再写，点不出就空。</p>
+  </header>
+
+  <div class="toolbar">
+    <button type="button" data-filter="need">还空着（可选）</button>
+    <button type="button" class="active" data-filter="done">已入库</button>
+    <button type="button" data-filter="all">全部</button>
+    <button type="button" id="copy">复制可选两项</button>
+    <button type="button" id="print">打印／另存 PDF</button>
+  </div>
+
+  <main>
+    <section id="need" class="hide">
+      <h2>还空着（可选，不追）</h2>
+      <p class="hint">点得出再写。点不出就保持空。不要为了填满而编。</p>
+
+      <article data-tier="need" data-id="6b">
+        <div class="meta"><span class="chip warn">可选</span><span class="chip">约 2023-06–07 · 高一末</span></div>
+        <h3>竹林杯和分班以外，还有没有另一件短名</h3>
+        <p class="already"><strong>已经有、不用再述：</strong>窗边／勇敢一点、历史课真心话——库里 8 月 12 日就有，时间也不是高一末。</p>
+        <p class="only">只问你：2023 年 6–7 月，还有没有一件你现在能叫出名字的事？没有就空着。</p>
+        <label for="a6b">短名（可空）</label>
+        <textarea id="a6b" placeholder="没有／还有：____"></textarea>
+      </article>
+
+      <article data-tier="need" data-id="5b">
+        <div class="meta"><span class="chip warn">可选</span><span class="chip">间章《灯还在》</span></div>
+        <h3>有没有「高三某天晚自习」这一晚的物件</h3>
+        <p class="already"><strong>已经有：</strong>间章坑位留下。没有某一晚，就不编日期。</p>
+        <p class="only">只问你：有没有一件能钉住那一晚的东西？没有就空着。</p>
+        <label for="a5b">物件（可空）</label>
+        <textarea id="a5b" placeholder="没有／有：____"></textarea>
+      </article>
+    </section>
+
+    <section id="done">
+      <h2>已入库，对照用</h2>
+      <p class="hint">这些不用再填。第 6 条的说明请看完。</p>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">9</span><span class="chip">2026 五一 · 西安 · 五天</span></div>
+        <h3>哪一天兵马俑、哪一天华山</h3>
+        <p class="ans"><strong>你的答复：</strong>玩了五天，有名景点基本上都去了；兵马俑／华山哪一天排不出。允许再补一点景点和美食。<br />
+        <strong>入库：</strong>天数改为五天。已点名：兵马俑、华山、城墙、陕历博、大唐不夜城。逐日仍空。大雁塔、回民街、钟楼和肉夹馍／凉皮／泡馍只准正文整段走推演号 P57-1，不写回「已打卡」，不编店名、哪一顿、对白。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">10</span><span class="chip">2024-07 · 浙大紫金港</span></div>
+        <h3>在浙大买笔记本：哪个点、谁跟着</h3>
+        <p class="ans"><strong>你的答复：</strong>紫金港校区，一个文具店，店名不记得。只有父母一起在场，还一起逛了浙大。<br />
+        <strong>入库：</strong>舅舅驾车浙江段，但不在买本、逛校这一场。送到 G2202 门口那一场本来就有。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">11</span><span class="chip">2025 · 川大望江 · 强基面试</span></div>
+        <h3>还记得哪一问</h3>
+        <p class="ans"><strong>你的答复：</strong>自我介绍有记忆稿（麓山国际、能吃苦肯钻研善思考、物理「名列前茅」、校训、丰盈的男子／不虚华不浮躁／先锋之态摸爬滚打）。进门前抽两道，选了「颜色是怎么形成的？」，答法不记得。其后随机问过：为什么对物理感兴趣、量子纠缠是什么。<br />
+        <strong>入库：</strong>介绍按记忆稿可用，不是录音。「名列前茅」是稿里的话，不是成绩档案。颜色题和两问只落题干，不编答法。考官脸不写。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">1</span><span class="chip">金海 · 不是麓山赵问竹军训照</span></div>
+        <h3>自己的操场照片</h3>
+        <p class="ans"><strong>你的答复：</strong>有。初中七张＋小学七张。校服印字是<strong>湘郡金海</strong>（不是金港）。间章《操场》仍只用 2022-03-10 金海那一张作幻灯。小学图另存在 <code>小学/素材/校园影像/</code>，不倒进同一则。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">2</span></div>
+        <h3>族谱年号表</h3>
+        <p class="ans"><strong>你的答复：</strong>可以用库里已有的一行。间章《换算》写成：民国元年。1912。壬子。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">3</span><span class="chip">2025-07 · 川大录取 EMS</span></div>
+        <h3>信封封面</h3>
+        <p class="ans"><strong>你的答复：</strong>附图。普通层可写：红袋、袋面「录取通知书」、EMS、国内标准快递、寄件人四川大学、内件品名高考录取通知书、收件人刘佑林。电话和门牌只进私密层，正文不写。拆开后的卷轴（物理学院、物理学、9 月 2–3 日江安报到、校长汪劲松）给第 46 章，间章《未拆》不写拆开的喜悦。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">4</span></div>
+        <h3>江安课外书</h3>
+        <p class="ans"><strong>你的答复：</strong>就是《演员自我修养》。旧提纲占位现已升为确认。间章只亮书名，不写读书报告。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">5</span></div>
+        <h3>空着的八则间章</h3>
+        <p class="ans"><strong>你的答复：</strong>全部留下。已写：换算、操场、典故、间隔、耳塞、未拆、初审、课外那本。《灯还在》仍没有「高三某天晚自习」这一晚的物件，只留坑，不编日期。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">6</span><span class="chip warn">不是新事</span></div>
+        <h3>你点的两件，库里早就有</h3>
+        <p class="scene"><strong>你写的是：</strong>①晚自习结束赵问竹在等我表白；②高二下历史课真心话大冒险，喻翰东问「你喜欢赵问竹吗」，你对她说「我喜欢你」；③库里应该还有很多类似的，还没挖深。</p>
+        <p class="note"><strong>核对结果：</strong>
+          <ul class="tight">
+            <li>①就是 2026-08-12 回忆第七节：<strong>高一下期中后</strong>，一次晚自习结束，她的同桌兼朋友示意你「勇敢一点」，周围也起哄，<strong>你没有走过去</strong>。她站在窗边的原因，她本人没有说明——不能写成「她在等你表白」。这不是 2023 年 6–7 月高一末的新事件。</li>
+            <li>②就是同一页的真心话。你自己在 <strong>2026-08-28</strong> 已经拍板：<strong>高一下、历史课</strong>。这次写成「高二下」不覆盖旧裁。高二分班后你在 G2205、她在 G2202，同一堂历史课四人组对不上。</li>
+            <li>③库里赵问竹线已经落下二十多场，不是没挖。对照页：知识库里的 <code>百万长文写作/赵问竹已入库存事件一览-2026-09-12.md</code>。</li>
+          </ul>
+        </p>
+        <p class="only">高一末（大约 2023 年 6–7 月）竹林杯和分班以外，若还有<strong>另一件</strong>你现在能叫出名字的事，下次另写短名。点不出就保持空，不编。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">7</span></div>
+        <h3>窗边她有没有说过为何站在那里</h3>
+        <p class="ans"><strong>你的答复：</strong>她没有说过。你知道她很喜欢看烟花，喜欢热闹、新奇、自然的东西；你觉得她很阳光、很自信。后半句是你的判断，正文可以这样替她想，<strong>不写进她的人物页</strong>。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">8</span></div>
+        <h3>按保存键那几秒</h3>
+        <p class="ans"><strong>你的答复：</strong>灯开着；另有星光、期许之光；键盘声、自然的声音。正文只用了：灯管开着、键响了一下。「期许之光」不当灯。「自然的声音」没指哪一种，不编。</p>
+      </article>
+
+      <article data-tier="done">
+        <div class="meta"><span class="chip done">12 · 13 · 15 · 16 · 17 · 18</span></div>
+        <h3>其余已拍板</h3>
+        <p class="ans">新加坡：出发 7 月 19 日，你 7 月 20 日到。<br />
+        麓山寝室：确认 426。<br />
+        辣姐：是向睿馨妈妈当时的微信名，现在改成娜娜（同一人）。<br />
+        夏思成问卷：不催。<br />
+        金海初中：没有改变自己的书；不怎么喜欢看课外书。<br />
+        颜子杰来访：确认 2026 年 8 月 4 日至 7 日。<br />
+        xAI 四张图：主题行 <code>Thank you for applying to xAI</code>，称呼 Hi 佑林。这是收到申请，未过初审仍按原来的确认。</p>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    文件：<code>D:\The Memory\The Memory\百万长文写作\待补清单.html</code>。第 9–11 场已入库。可选两项点得出再写。
+  </footer>
+
+  <script>
+    const KEY = "the-memory-fill-2026-09-12-optional";
+    const fields = ["a6b","a5b"];
+    function load() {
+      try {
+        const data = JSON.parse(localStorage.getItem(KEY) || "{}");
+        fields.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el && data[id]) el.value = data[id];
+        });
+      } catch (e) {}
+    }
+    function save() {
+      const data = {};
+      fields.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) data[id] = el.value;
+      });
+      localStorage.setItem(KEY, JSON.stringify(data));
+    }
+    function gather() {
+      const titles = {
+        a6b: "高一末竹林杯和分班以外还有没有另一件短名",
+        a5b: "灯还在有没有高三某天晚自习的物件"
+      };
+      let out = "《刘佑林的19年回忆录》可选答复 " + new Date().toISOString().slice(0,10) + "\n\n";
+      fields.forEach((id) => {
+        const t = document.getElementById(id);
+        const tv = t ? t.value.trim() : "";
+        if (!tv) return;
+        out += titles[id] + "\n" + tv + "\n\n";
+      });
+      return out.trim() || "（可选两项都空着，这是有效答复）";
+    }
+    document.addEventListener("input", save);
+    document.getElementById("copy").onclick = async () => {
+      const text = gather();
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("已复制。请粘贴回对话。");
+      } catch (e) {
+        prompt("复制以下内容：", text);
+      }
+    };
+    document.getElementById("print").onclick = () => window.print();
+    document.querySelectorAll(".toolbar button[data-filter]").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll(".toolbar button[data-filter]").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const f = btn.dataset.filter;
+        document.querySelectorAll("main section").forEach((sec) => {
+          if (f === "all") { sec.classList.remove("hide"); return; }
+          sec.classList.toggle("hide", sec.id !== f);
+        });
+      };
+    });
+    load();
+  </script>
+</body>
+</html>
