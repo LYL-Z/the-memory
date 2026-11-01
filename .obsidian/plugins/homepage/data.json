@@ -1,8 +1,8 @@
 {
-  "version": 4,
+  "version": 5,
   "homepages": {
     "Main Homepage": {
-      "value": "00-知识库首页",
+      "value": "00-知识库首页.md",
       "kind": "File",
       "openOnStartup": true,
       "openMode": "Replace all open notes",
