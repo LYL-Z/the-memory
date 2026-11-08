@@ -1,9 +1,9 @@
 #!/bin/bash
 # 知识库每日自动备份推送
 # 路径：The Memory/The Memory/scripts/push_vault.sh
-# 作用：git add -A +（有变更则提交）+ 推送到 GitHub 私有库 origin/master
+# 作用：git add -A +（有变更则提交）+ 推送到 GitHub 公开库 origin/master
 # 已内置本机三处坑的绕过：死代理(:11119)、凭据助手绝对路径、LFS。
-# 私密层 私人资料/ 被 .gitignore 排除，不会上传。
+# 本地私密原件由 .gitignore 排除，不会上传。
 set -euo pipefail
 cd "D:/The Memory/The Memory"
 
