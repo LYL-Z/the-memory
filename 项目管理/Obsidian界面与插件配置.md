@@ -31,7 +31,7 @@ cssclasses: [longform]
 
 维护提示：Style Settings 1.0.9 的上游仓库已归档，但它仍是 Obsidian 官方社区注册表中的稳定插件，本次在 Obsidian 1.13.7 中可加载。自定义 CSS 已写入默认值；即使未来停用 Style Settings，当前视觉方案仍会生效，只会失去图形化调节面板。
 
-`Obsidian Git` 已启用。Vault 根目录是 Git 仓库，`.gitignore` 排除整个 `私人资料/`。插件配置禁止自动推送。没有远端之前，它只提供本机版本记录，不能代替 Sync 或含私密层的 ZIP。详见 [[项目管理/备份与恢复运维|备份与恢复运维]]。
+`Obsidian Git` 已启用。Vault 根目录是 Git 仓库，`.gitignore` 排除整个 `本地私密原件`。插件配置禁止自动推送。没有远端之前，它只提供本机版本记录，不能代替 Sync 或含私密层的 ZIP。详见 [[项目管理/备份与恢复运维|备份与恢复运维]]。
 
 ## 视觉方案
 
